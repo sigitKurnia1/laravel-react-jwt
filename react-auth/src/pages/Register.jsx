@@ -1,54 +1,47 @@
-//Import useState hook
 import { useEffect, useState } from "react"
-
-//Import hook useNavigate
 import { useNavigate } from "react-router-dom"
-
-//Import axios
 import axios from "axios"
 
 const Register = () => {
-    //Define state
-    const [name, setName] = useState("")
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [passwordConfirmation, setPasswordConfirmation] = useState("")
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        password: "",
+        password_confirmation: "",
+    })
+    
+    const [isLoading, setIsLoading] = useState(false)
+    const[validation, setValidation] = useState({})
 
-    //Define state validation
-    const[validation, setValidation] = useState([])
-
-    //Define navigate
     const navigate = useNavigate()
 
-    //Hook useEffect
-    useEffect(() => {
-        //Check token
-        if (localStorage.getItem("token")) {
-            navigate("/dashboard")
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    useEffect (() => {
+        if (localStorage.getItem("token")) navigate ("/dashboard")
+    }, [navigate])
 
-    //Function "registerHandler"
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        })
+    }
+
     const registerHandler = async (e) => {
         e.preventDefault()
+        setIsLoading(true)
 
-        //Initialize formData
-        const formData = new FormData()
+        const {name, email, password, password_confirmation} = formData
 
-        //Append data formData
-        formData.append("name", name)
-        formData.append("email", email)
-        formData.append("password", password)
-        formData.append("password_confirmation", passwordConfirmation)
-    
-        await axios.post("http://localhost:8000/api/register", formData)
-            .then(() => {
-                navigate("/")
+        try {
+            await axios.post("http://localhost:8000/api/register", {
+                name, email, password, password_confirmation: password_confirmation
             })
-            .catch((error) => {
-                setValidation(error.response.data)
-            })
+            navigate("/")
+        } catch (error) {
+            setValidation(error.response.data)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -58,58 +51,82 @@ const Register = () => {
                     <div className="card border-0 rounded shadow-sm">
                         <div className="card-body">
                             <h4 className="fw-bold">HALAMAN REGISTER</h4>
-                            <hr/>
+                            <hr />
                             <form onSubmit={registerHandler}>
                                 <div className="row">
                                     <div className="col-md-6">
                                         <div className="mb-3">
                                             <label className="form-label">NAMA LENGKAP</label>
-                                            <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} placeholder="Masukkan Nama Lengkap"/>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleChange}
+                                                placeholder="Masukkan Nama Lengkap"
+                                            />
+                                            {validation.name && (
+                                                <div className="alert alert-danger">
+                                                    {validation.name[0]}
+                                                </div>
+                                            )}
                                         </div>
-                                        {
-                                        validation.name && (
-                                            <div className="alert alert-danger">
-                                                {validation.name[0]}
-                                            </div>
-                                        )
-                                        }
                                     </div>
                                     <div className="col-md-6">
                                         <div className="mb-3">
                                             <label className="form-label">ALAMAT EMAIL</label>
-                                            <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Masukkan Alamat Email"/>
-                                        </div>
-                                        {
-                                            validation.email && (
+                                            <input
+                                                type="email"
+                                                className="form-control"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                placeholder="Masukkan Alamat Email"
+                                            />
+                                            {validation.email && (
                                                 <div className="alert alert-danger">
                                                     {validation.email[0]}
                                                 </div>
-                                            )
-                                        }
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="row">
                                     <div className="col-md-6">
                                         <div className="mb-3">
                                             <label className="form-label">PASSWORD</label>
-                                            <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Masukkan Password"/>
-                                        </div>
-                                        {
-                                            validation.password && (
+                                            <input
+                                                type="password"
+                                                className="form-control"
+                                                name="password"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                placeholder="Masukkan Password"
+                                            />
+                                            {validation.password && (
                                                 <div className="alert alert-danger">
                                                     {validation.password[0]}
                                                 </div>
-                                            )
-                                        }
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="col-md-6">
                                         <div className="mb-3">
                                             <label className="form-label">KONFIRMASI PASSWORD</label>
-                                            <input type="password" className="form-control" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} placeholder="Masukkan Konfirmasi Password"/>
+                                            <input
+                                                type="password"
+                                                className="form-control"
+                                                name="password_confirmation"
+                                                value={formData.passwordConfirmation}
+                                                onChange={handleChange}
+                                                placeholder="Masukkan Konfirmasi Password"
+                                            />
                                         </div>
                                     </div>
                                 </div>
-                                <button type="submit" className="btn btn-primary">REGISTER</button>
+                                <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                                    {isLoading ? "Creating new account..." : "REGISTER"}
+                                </button>
                             </form>
                         </div>
                     </div>

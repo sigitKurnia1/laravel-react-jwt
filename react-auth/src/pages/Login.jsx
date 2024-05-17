@@ -1,55 +1,38 @@
-//Import hook react
 import { useEffect, useState } from "react"
-
-//Import hook useNavigate
 import { useNavigate } from "react-router-dom"
-
-//Import axios
 import axios from "axios"
 
 const Login = () => {
-    //Define state
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
 
-    //Define state validation
+    const [credentials, setCredentials] = useState({email: "", password: ""})
+
     const [validation, setValidation] = useState([])
 
-    //Define navigate
+    const [isLoading, setIsLoading] = useState(false)
+
     const navigate = useNavigate()
 
-    //Hook useEffect
-    useEffect(() => {
-        //Check token
-        if (localStorage.getItem("token")) {
-            navigate("/dashboard")
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    useEffect (() => {
+        if (localStorage.getItem("token")) navigate("/dashboard")
+    }, [navigate])
 
-    //Function loginHandler
     const loginHandler = async (e) => {
         e.preventDefault()
+        setIsLoading(true)
 
-        //Initialize formData
-        const formData = new FormData()
+        try {
+            const {data} = await axios.post("http://localhost:8000/api/login", credentials)
+            localStorage.setItem("token", data.token)
+            navigate("/dashboard")
+        } catch (error) {
+            setValidation(error.response.data)
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
-        //Append data to formData
-        formData.append("email", email)
-        formData.append("password", password)
-
-        await axios.post("http://localhost:8000/api/login", formData)
-            .then((response) => {
-                //Set token on localStorage
-                localStorage.setItem('token', response.data.token)
-
-                //Redirect ro dashboard
-                navigate("/dashboard")
-            })
-            .catch((error) => {
-                //Assign error to state validation
-                setValidation(error.response.data)
-            })
+    const handleChange = (e) => {
+        setCredentials({...credentials, [e.target.name]: e.target.value})
     }
 
     return (
@@ -59,39 +42,49 @@ const Login = () => {
                     <div className="card border-0 rounded shadow-sm">
                         <div className="card-body">
                             <h4 className="fw-bold">HALAMAN LOGIN</h4>
-                            <hr/>
-                            {
-                                validation.message && (
-                                    <div className="alert alert-danger">
-                                        {validation.message}
-                                    </div>
-                                )
-                            }
+                            <hr />
+                            {validation.message && (
+                                <div className="alert alert-danger">{validation.message}</div>
+                            )}
                             <form onSubmit={loginHandler}>
                                 <div className="mb-3">
                                     <label className="form-label">ALAMAT EMAIL</label>
-                                    <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Masukkan Alamat Email"/>
-                                </div>
-                                {
-                                    validation.email && (
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        className="form-control"
+                                        value={credentials.email}
+                                        onChange={handleChange}
+                                        placeholder="Masukkan Alamat Email"
+                                        disabled={isLoading}
+                                    />
+                                    {validation.email && (
                                         <div className="alert alert-danger">
                                             {validation.email[0]}
                                         </div>
-                                    )
-                                }
+                                    )}
+                                </div>
                                 <div className="mb-3">
                                     <label className="form-label">PASSWORD</label>
-                                    <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Masukkan Password"/>
-                                </div>
-                                {
-                                    validation.password && (
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        className="form-control"
+                                        value={credentials.password}
+                                        onChange={handleChange}
+                                        placeholder="Masukkan Password"
+                                        disabled={isLoading}
+                                    />
+                                    {validation.password && (
                                         <div className="alert alert-danger">
                                             {validation.password[0]}
                                         </div>
-                                    )
-                                }
+                                    )}
+                                </div>
                                 <div className="d-grid gap-2">
-                                    <button type="submit" className="btn btn-primary">LOGIN</button>
+                                    <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                                        {isLoading ? "Logging in..." : "LOGIN"}
+                                    </button>
                                 </div>
                             </form>
                         </div>
